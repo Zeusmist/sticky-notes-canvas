@@ -88,6 +88,12 @@ export const createNote = ({
       document.getElementById(id + colorObj.color).onclick = () =>
         onChangeColor(id, colorObj.color);
     });
+
+    const colorContainers = document.getElementsByClassName("colorContainer");
+    // Setting style here because bootstrap js overrides inline declaration
+    Array.prototype.forEach.call(colorContainers, (el) => {
+      el.style.minWidth = "130px";
+    });
   }
 
   onCreateNote(newNote);

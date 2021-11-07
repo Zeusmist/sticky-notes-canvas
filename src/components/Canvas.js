@@ -27,8 +27,9 @@ class Canvas extends React.Component {
 
   canvasClickListener = (e) => {
     /* Register the touch position */
-    const touch_x = e.clientX;
-    const touch_y = e.clientY;
+    const touch_x = e.layerX;
+    const touch_y = e.layerY;
+    console.log({ e, touchPosition: { x: touch_x, y: touch_y } });
     this.setState({ touchPosition: { x: touch_x, y: touch_y } });
     return;
   };

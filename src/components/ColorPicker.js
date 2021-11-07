@@ -6,7 +6,7 @@ const ColorPicker = (props) => {
   return (
     <>
       <button
-        className="btn p-0 dropdown-toggle"
+        className="btn p-0"
         type="button"
         id="colorBtn"
         data-bs-toggle="dropdown"
@@ -15,11 +15,11 @@ const ColorPicker = (props) => {
         <FontAwesomeIcon icon={faPalette} />
       </button>
       <div
-        className="dropdown-menu"
+        className="dropdown-menu colorContainer shadow-sm"
         aria-labelledby="colorBtn"
-        id="colorContainer"
+        style={{ border: "none", left: "-110px" }}
       >
-        <div className="d-flex flex-wrap" style={{ maxWidth: "95px" }}>
+        <div className="d-flex flex-wrap">
           {colors.map((c, i) => (
             <div
               key={i}
