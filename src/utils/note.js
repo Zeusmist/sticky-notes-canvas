@@ -1,6 +1,7 @@
 /* eslint-disable eqeqeq */
 import reactDomServer from "react-dom/server";
-import { X } from "react-feather";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ColorPicker from "../components/ColorPicker";
 
 export const colors = [
@@ -54,7 +55,7 @@ export const createNote = ({
   if (!imageObj) {
     /* NOTE HEADER */
     const noteHeader = document.createElement("div");
-    noteHeader.className = "d-flex justify-content-end m-1";
+    noteHeader.className = "d-flex justify-content-end align-items-center m-1";
     noteHeader.style.height = "20px";
 
     /* COLOR BUTTON */
@@ -67,9 +68,10 @@ export const createNote = ({
 
     /* DELETE BUTTON */
     const deleteButton = document.createElement("div");
-    deleteButton.className = "btn p-0";
-    deleteButton.innerHTML = reactDomServer.renderToStaticMarkup(<X />);
-    deleteButton.style.lineHeight = "1";
+    deleteButton.className = "btn p-0 ms-1";
+    deleteButton.innerHTML = reactDomServer.renderToStaticMarkup(
+      <FontAwesomeIcon icon={faTimes} />
+    );
     deleteButton.onclick = () => onDeleteNote(id);
     noteHeader.appendChild(deleteButton);
 

@@ -19,7 +19,7 @@ A user should be able to:
 # Bonus features
 
 -> Color: Add ability to change the color of a sticky note. ✔
--> Drawing: Add ability to draw anywhere on the canvas (super bonus if you add ability to erase).
+-> Drawing: Add ability to draw anywhere on the canvas (super bonus if you add ability to erase). ✔
 -> Images: Add ability to upload images to the canvas. ✔
 
 # Mega Bonus features

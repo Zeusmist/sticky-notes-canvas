@@ -1,6 +1,13 @@
 /* eslint-disable eqeqeq */
 import React from "react";
 import { createNote, mouseDownOnNote } from "../utils/note";
+import {
+  faTrash,
+  faPencilAlt,
+  faEraser,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { startToolDrag, stopToolDrag } from "../utils/canvas";
 
 // OUT of Bounds when left is greater than canvas width - note width
 
@@ -8,6 +15,8 @@ const createOptions = [
   { type: "note", label: "New Note" },
   { type: "image", label: "New Image" },
 ];
+
+let canvas, ctx;
 
 class Canvas extends React.Component {
   constructor(props) {
@@ -17,19 +26,25 @@ class Canvas extends React.Component {
     this.imageInputRef = React.createRef();
     this.state = {
       stickyNotes: [],
+      canvasTools: [
+        { type: "pencil", icon: faPencilAlt, onClick: this.activatePencil },
+        { type: "eraser", icon: faEraser, onClick: this.activateEraser },
+      ],
     };
   }
 
   componentDidMount() {
-    const canvas = this.canvasRef.current;
-    canvas.addEventListener("click", this.canvasClickListener, false);
+    canvas = this.canvasRef.current;
+    canvas.addEventListener("click", this.canvasClickListener, false); //Eventbubble
+    ctx = canvas.getContext("2d");
+    ctx.canvas.width = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
   }
 
   canvasClickListener = (e) => {
     /* Register the touch position */
     const touch_x = e.layerX;
     const touch_y = e.layerY;
-    console.log({ e, touchPosition: { x: touch_x, y: touch_y } });
     this.setState({ touchPosition: { x: touch_x, y: touch_y } });
     return;
   };
@@ -64,6 +79,7 @@ class Canvas extends React.Component {
 
   handleDeleteAll = () => {
     const { stickyNotes } = this.state;
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     stickyNotes.forEach((note) => {
       this.rootRef.current.removeChild(note);
     });
@@ -118,8 +134,39 @@ class Canvas extends React.Component {
     });
   };
 
+  activatePencil = () => {
+    /* Change the active state of the tool to the opposite of current value */
+    const updatedState = this.state.canvasTools;
+    updatedState[0].isActive = !!!updatedState[0]?.isActive;
+    updatedState[1].isActive = false;
+    this.setState({ canvasTools: updatedState, touchPosition: null }, () => {
+      this.toggleTool("pencil", "eraser", updatedState[0].isActive);
+    });
+  };
+
+  activateEraser = () => {
+    /* Change the active state of the tool to the opposite of current value */
+    const updatedState = this.state.canvasTools;
+    updatedState[0].isActive = false;
+    updatedState[1].isActive = !!!updatedState[1]?.isActive;
+    this.setState({ canvasTools: updatedState, touchPosition: null }, () => {
+      this.toggleTool("eraser", "pencil", updatedState[1].isActive);
+    });
+  };
+
+  toggleTool = (type, opposite, typeIsActive) => {
+    if (typeIsActive) {
+      stopToolDrag(opposite, ctx); //make sure previous tool is disbled first
+      canvas.removeEventListener("click", this.canvasClickListener, false);
+      startToolDrag(type, ctx);
+    } else {
+      canvas.addEventListener("click", this.canvasClickListener, false);
+      stopToolDrag(type, ctx);
+    }
+  };
+
   render() {
-    const { touchPosition, stickyNotes } = this.state;
+    const { touchPosition, canvasTools } = this.state;
     return (
       <div
         ref={this.rootRef}
@@ -141,6 +188,7 @@ class Canvas extends React.Component {
               position: "absolute",
               top: touchPosition.y + "px",
               left: touchPosition.x + "px",
+              backgroundColor: "#fff",
             }}
           >
             {createOptions.map((option, i) => (
@@ -155,16 +203,29 @@ class Canvas extends React.Component {
           </div>
         )}
 
-        {/* CANVAS OPTIONS */}
-        {stickyNotes.length > 0 && (
+        {/* CANVAS TOOL OPTIONS */}
+        <div
+          className="d-flex flex-column"
+          style={{ position: "absolute", top: 10, right: 10, zIndex: 1000 }}
+        >
           <div
-            className="btn btn-sm btn-danger"
-            style={{ position: "absolute", top: 10, right: 10, zIndex: 1000 }}
+            className="btn btn-danger rounded-circle shadow-sm p-2 m-2"
             onClick={this.handleDeleteAll}
           >
-            Clear All
+            <FontAwesomeIcon icon={faTrash} size="lg" />
           </div>
-        )}
+          {canvasTools.map((tool, i) => (
+            <div
+              key={i}
+              className={`btn btn-outline-secondary rounded-circle shadow-sm p-2 m-2 ${
+                tool.isActive ? "active" : ""
+              }`}
+              onClick={tool.onClick}
+            >
+              <FontAwesomeIcon icon={tool.icon} size="lg" />
+            </div>
+          ))}
+        </div>
 
         {/* IMAGE INPUT */}
         <input
