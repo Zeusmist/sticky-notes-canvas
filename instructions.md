@@ -24,5 +24,5 @@ A user should be able to:
 
 # Mega Bonus features
 
-- Collaboration: Share the link of the canvas with a peer. Both peers can edit the same canvas in real-time.
-- Persistence: Persist the state of the board when it is modified and restore it when the user opens the same link again.
+- Collaboration: Share the link of the canvas with a peer. Both peers can edit the same canvas in real-time. ✖
+- Persistence: Persist the state of the board when it is modified and restore it when the user opens the same link again. ✔
