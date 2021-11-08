@@ -77,6 +77,7 @@ export const createNote = ({
 
     /* TEXTAREA */
     const noteBody = document.createElement("textarea");
+    noteBody.placeholder = "Write a note...";
     noteBody.style.border = "none";
     noteBody.style.backgroundColor = "transparent";
     noteBody.className = "form-control shadow-none";
