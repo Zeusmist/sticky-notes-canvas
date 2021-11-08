@@ -1,13 +1,24 @@
 /* eslint-disable eqeqeq */
 import React from "react";
-import { createNote, mouseDownOnNote } from "../utils/note";
+import {
+  createNote,
+  fetchSavedNotes,
+  mouseDownOnNote,
+  resetNotesStorage,
+  saveNoteToStorage,
+} from "../utils/note";
 import {
   faTrash,
   faPencilAlt,
   faEraser,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { startToolDrag, stopToolDrag } from "../utils/canvas";
+import {
+  reloadCanvas,
+  saveCanvasToStorage,
+  startToolDrag,
+  stopToolDrag,
+} from "../utils/canvas";
 
 // OUT of Bounds when left is greater than canvas width - note width
 
@@ -33,13 +44,23 @@ class Canvas extends React.Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     canvas = this.canvasRef.current;
     canvas.addEventListener("click", this.canvasClickListener, false); //Eventbubble
     ctx = canvas.getContext("2d");
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
+    reloadCanvas(ctx);
+    await this.loadSavedNotes();
   }
+
+  loadSavedNotes = async () => {
+    // load all previous notes saved in local storage
+    const allSavedNotes = fetchSavedNotes();
+    for (let i = 0; i < allSavedNotes.length; i++) {
+      await this.handleCreateNote({ loadObj: allSavedNotes[i] });
+    }
+  };
 
   canvasClickListener = (e) => {
     /* Register the touch position */
@@ -70,45 +91,65 @@ class Canvas extends React.Component {
     }
   };
 
-  changeNoteColor = (id, color) => {
-    const { stickyNotes } = this.state;
-    const selectedNoteIndex = stickyNotes.findIndex((n) => n.id == id);
-    if (selectedNoteIndex > -1)
-      stickyNotes[selectedNoteIndex].style.backgroundColor = color;
-  };
-
   handleDeleteAll = () => {
     const { stickyNotes } = this.state;
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     stickyNotes.forEach((note) => {
       this.rootRef.current.removeChild(note);
     });
-    this.setState({ stickyNotes: [] });
+    this.setState({ stickyNotes: [] }, () => {
+      resetNotesStorage();
+      saveCanvasToStorage(canvas);
+    });
   };
 
   handleOption = (type) => {
     const { touchPosition } = this.state;
     this.setState({ touchPosition: null }, () => {
-      if (type == "note") this.handleCreateNote(touchPosition);
+      if (type == "note") this.handleCreateNote({ touchPosition });
       if (type == "image") this.createImage(touchPosition);
     });
   };
 
-  handleCreateNote = (touchPosition, imageObj) => {
+  handleCreateNote = async ({ touchPosition, imageObj, loadObj }) => {
     const { stickyNotes } = this.state;
-    const id = stickyNotes.length + 1;
-    createNote({
+    const id = new Date().toISOString();
+    await createNote({
+      loadObj,
       id,
       touchPosition,
       imageObj,
       onMouseDown: this.handleMouseDownOnNote,
       rootElement: this.rootRef.current,
       onCreateNote: (newNote) =>
-        this.setState({
-          stickyNotes: [...stickyNotes, newNote],
-        }),
-      onChangeColor: this.changeNoteColor,
+        this.setState(
+          {
+            stickyNotes: [...stickyNotes, newNote],
+          },
+          () => {
+            if (!loadObj) {
+              // persist note here
+              this.handleSaveNote(newNote, imageObj);
+            }
+          }
+        ),
       onDeleteNote: this.deleteNote,
+    });
+  };
+
+  handleSaveNote = (note, imgObj) => {
+    const {
+      id,
+      style: { top, left, backgroundColor },
+    } = note;
+    const text = document.getElementById(`textarea-${id}`)?.value;
+    saveNoteToStorage({
+      id,
+      top,
+      left,
+      backgroundColor,
+      text,
+      src: imgObj?.src,
     });
   };
 
@@ -123,7 +164,10 @@ class Canvas extends React.Component {
       if (files.length > 0) {
         const fr = new FileReader();
         fr.onload = () => {
-          this.handleCreateNote(touchPosition, { src: fr.result });
+          this.handleCreateNote({
+            touchPosition,
+            imageObj: { src: fr.result },
+          });
         };
         fr.readAsDataURL(files[0]);
       }
@@ -158,10 +202,10 @@ class Canvas extends React.Component {
     if (typeIsActive) {
       stopToolDrag(opposite, ctx); //make sure previous tool is disbled first
       canvas.removeEventListener("click", this.canvasClickListener, false);
-      startToolDrag(type, ctx);
+      startToolDrag(type, ctx, canvas);
     } else {
       canvas.addEventListener("click", this.canvasClickListener, false);
-      stopToolDrag(type, ctx);
+      stopToolDrag(type, ctx, canvas);
     }
   };
 
