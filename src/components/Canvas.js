@@ -72,6 +72,16 @@ class Canvas extends React.Component {
 
   handleMouseDownOnNote = (e, id) => {
     if (this.state.touchPosition) this.setState({ touchPosition: null });
+    if (this.state.canvasTools.find((tool) => tool.isActive)) {
+      // if any active canvas tool, deactivate it
+      let updatedState = this.state.canvasTools;
+      updatedState.forEach((t) => {
+        t.isActive = false;
+      });
+      this.toggleTool("pencil", "eraser", false);
+      this.toggleTool("eraser", "pencil", false);
+      this.setState({ canvasTools: updatedState });
+    }
     const { stickyNotes } = this.state;
     const selectedNote = stickyNotes.find((n) => n.id == id);
 

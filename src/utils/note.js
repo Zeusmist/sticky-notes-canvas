@@ -31,12 +31,14 @@ export const createNote = async ({
    */
 
   if (loadObj?.id) id = loadObj?.id;
+  const isImage = loadObj?.src || imageObj;
 
   const newNote = document.createElement("div");
 
   newNote.id = id;
 
-  if (loadObj?.src || imageObj) {
+  if (isImage) {
+    // IMAGE
     const newImage = document.createElement("img");
     newImage.src = loadObj?.src ?? imageObj.src;
     newImage.style.pointerEvents = "none";
@@ -57,7 +59,25 @@ export const createNote = async ({
   newNote.addEventListener("mousedown", (e) => onMouseDown(e, id));
   rootElement.appendChild(newNote);
 
-  if (!loadObj?.src && !imageObj) {
+  /* DELETE BUTTON */
+  const deleteButton = document.createElement("div");
+  deleteButton.className = "btn p-0 ms-1";
+  deleteButton.innerHTML = reactDomServer.renderToStaticMarkup(
+    <FontAwesomeIcon icon={faTimes} />
+  );
+  deleteButton.onclick = () => {
+    onDeleteNote(id);
+    deleteNoteFromStorage(id);
+  };
+
+  if (isImage) {
+    deleteButton.style.position = "relative";
+    deleteButton.style.top = "-205px";
+    deleteButton.style.left = "110px";
+    newNote.appendChild(deleteButton);
+  }
+
+  if (!isImage) {
     /* NOTE HEADER */
     const noteHeader = document.createElement("div");
     noteHeader.className = "d-flex justify-content-end align-items-center m-1";
@@ -69,18 +89,8 @@ export const createNote = async ({
     colorButton.innerHTML = reactDomServer.renderToStaticMarkup(
       <ColorPicker noteId={id} />
     );
-    noteHeader.appendChild(colorButton);
 
-    /* DELETE BUTTON */
-    const deleteButton = document.createElement("div");
-    deleteButton.className = "btn p-0 ms-1";
-    deleteButton.innerHTML = reactDomServer.renderToStaticMarkup(
-      <FontAwesomeIcon icon={faTimes} />
-    );
-    deleteButton.onclick = () => {
-      onDeleteNote(id);
-      deleteNoteFromStorage(id);
-    };
+    noteHeader.appendChild(colorButton);
     noteHeader.appendChild(deleteButton);
 
     /* TEXTAREA */
